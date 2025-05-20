@@ -3,16 +3,56 @@ syntax = "proto3";
 // 声明代码所在的包
 package fixbug;
 
+// 定义选项，表示生成service服务类和rpc方法，默认不生成
+option cc_generic_services = true;
+
+//
+message ResultCode
+{
+    int32 errcode = 1;
+    bytes errmsg = 2;
+}
+
+
 // 定义登录消息类型
 message LoginRequest
 {
-    string name = 1;
-    string pwd = 2;
+    bytes name = 1;
+    bytes pwd = 2;
+    map<int32, string> test = 3;
 }
 // 定义登录响应消息类型
 message LoginResponse
 {
-    int32 errnum = 1;
-    string errmsg = 2;
+    ResultCode result = 1;
     bool success = 3;
+}
+//
+message User
+{
+    bytes name = 1;
+    uint32 age = 2;
+    enum Sex
+    {
+        MAN = 0;
+        WUMAN = 1;
+    }
+    Sex sex = 3;
+}
+//  
+message GetfriendListRequest
+{
+    uint32 userid = 1;
+}
+//
+message GetfriendListResponse
+{
+    ResultCode resultCode = 1;
+    repeated User friendList = 2;   // 定义一个列表
+}
+
+service UserServiceRpc
+{
+    rpc Login(LoginRequest) returns(LoginResponse);
+    rpc GetfriendList(GetfriendListRequest) returns(GetfriendListResponse);
 }
