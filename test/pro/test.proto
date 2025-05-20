@@ -1,0 +1,18 @@
+// 声明protobuf版本
+syntax = "proto3"; 
+// 声明代码所在的包
+package fixbug;
+
+// 定义登录消息类型
+message LoginRequest
+{
+    string name = 1;
+    string pwd = 2;
+}
+// 定义登录响应消息类型
+message LoginResponse
+{
+    int32 errnum = 1;
+    string errmsg = 2;
+    bool success = 3;
+}
