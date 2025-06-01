@@ -13,16 +13,23 @@ class UserSerivce : public fixbug::UserServiceRpc // 使用在rpc发布端（rpc
 public:
     bool Login(std::string name, std::string pwd);
     // 重写UserServiceRpc基类的虚函数
-    void Login(google::protobuf::RpcController* controller,
-                       const ::fixbug::LoginRequest* request,
-                       ::fixbug::LoginResponse* response,
-                       ::google::protobuf::Closure* done);
+    void Login(google::protobuf::RpcController *controller,
+               const ::fixbug::LoginRequest *request,
+               ::fixbug::LoginResponse *response,
+               ::google::protobuf::Closure *done);
+
+    bool Register(uint32_t id, std::string name, std::string pwd);
+    void Register(google::protobuf::RpcController *controller,
+               const ::fixbug::RegisterRequest *request,
+               ::fixbug::RegisterResponse *response,
+               ::google::protobuf::Closure *done);
 };
 
 bool UserSerivce::Login(std::string name, std::string pwd)
 {
     std::cout << "doing local service: Login" << std::endl;
     std::cout << "name" << name << "\tpwd" << pwd << std::endl;
+    return true;
 }
 
 void UserSerivce::Login(google::protobuf::RpcController *controller, const ::fixbug::LoginRequest *request, ::fixbug::LoginResponse *response, ::google::protobuf::Closure *done)
@@ -44,10 +51,33 @@ void UserSerivce::Login(google::protobuf::RpcController *controller, const ::fix
     done->Run();
 }
 
-int main(int argc, char** argv)
+bool UserSerivce::Register(uint32_t id, std::string name, std::string pwd)
+{
+    std::cout << "doing local service: Register" << std::endl;
+    std::cout << "id:" << id << "\tname:" << name << "\tpwd:" << pwd << std::endl;
+    return true;
+}
+
+void UserSerivce::Register(google::protobuf::RpcController *controller, const ::fixbug::RegisterRequest *request, ::fixbug::RegisterResponse *response, ::google::protobuf::Closure *done)
+{
+    uint32_t id = request->id();
+    std::string name = request->name();
+    std::string pwd = request->pwd();
+
+    bool bet = Register(id, name, pwd);
+
+    response->mutable_result()->set_errcode(0);
+    response->mutable_result()->set_errmsg("");
+    response->set_success(bet);
+
+    done->Run();
+}
+
+int main(int argc, char **argv)
 {
     MprpcApplication::init(argc, argv);
 
     RpcProvider provider;
     provider.NotifyService(new UserSerivce());
+    provider.run();
 }
