@@ -5,79 +5,79 @@
 #include "mprpcapplication.h"
 #include "rpcprovider.h"
 
-/**
- * userservice原来是一个本地服务，提供两个进程的本地方法，Login和GetFriendLiset
- */
-class UserSerivce : public fixbug::UserServiceRpc // 使用在rpc发布端（rpc服务提供者）
-{
-public:
-    bool Login(std::string name, std::string pwd);
-    // 重写UserServiceRpc基类的虚函数
-    void Login(google::protobuf::RpcController *controller,
-               const ::fixbug::LoginRequest *request,
-               ::fixbug::LoginResponse *response,
-               ::google::protobuf::Closure *done);
+// /**
+//  * userservice原来是一个本地服务，提供两个进程的本地方法，Login和GetFriendLiset
+//  */
+// class UserSerivce : public fixbug::UserServiceRpc // 使用在rpc发布端（rpc服务提供者）
+// {
+// public:
+//     bool Login(std::string name, std::string pwd);
+//     // 重写UserServiceRpc基类的虚函数
+//     void Login(google::protobuf::RpcController *controller,
+//                const ::fixbug::LoginRequest *request,
+//                ::fixbug::LoginResponse *response,
+//                ::google::protobuf::Closure *done);
 
-    bool Register(uint32_t id, std::string name, std::string pwd);
-    void Register(google::protobuf::RpcController *controller,
-               const ::fixbug::RegisterRequest *request,
-               ::fixbug::RegisterResponse *response,
-               ::google::protobuf::Closure *done);
-};
+//     bool Register(uint32_t id, std::string name, std::string pwd);
+//     void Register(google::protobuf::RpcController *controller,
+//                const ::fixbug::RegisterRequest *request,
+//                ::fixbug::RegisterResponse *response,
+//                ::google::protobuf::Closure *done);
+// };
 
-bool UserSerivce::Login(std::string name, std::string pwd)
-{
-    std::cout << "doing local service: Login" << std::endl;
-    std::cout << "name" << name << "\tpwd" << pwd << std::endl;
-    return true;
-}
+// bool UserSerivce::Login(std::string name, std::string pwd)
+// {
+//     std::cout << "doing local service: Login" << std::endl;
+//     std::cout << "name" << name << "\tpwd" << pwd << std::endl;
+//     return true;
+// }
 
-void UserSerivce::Login(google::protobuf::RpcController *controller, const ::fixbug::LoginRequest *request, ::fixbug::LoginResponse *response, ::google::protobuf::Closure *done)
-{
-    // 框架给业务上报请求参数，获取数据做本地业务
-    std::string name = request->name();
-    std::string pwd = request->pwd();
+// void UserSerivce::Login(google::protobuf::RpcController *controller, const ::fixbug::LoginRequest *request, ::fixbug::LoginResponse *response, ::google::protobuf::Closure *done)
+// {
+//     // 框架给业务上报请求参数，获取数据做本地业务
+//     std::string name = request->name();
+//     std::string pwd = request->pwd();
 
-    // 做本地业务
-    bool loginResult = Login(name, pwd);
+//     // 做本地业务
+//     bool loginResult = Login(name, pwd);
 
-    // 作出回应
-    fixbug::ResultCode *result = response->mutable_result();
-    result->set_errcode(0);
-    result->set_errmsg("");
-    response->set_success(loginResult);
+//     // 作出回应
+//     fixbug::ResultCode *result = response->mutable_result();
+//     result->set_errcode(0);
+//     result->set_errmsg("");
+//     response->set_success(loginResult);
 
-    // 执行回调函数， 对象数据序列化和网络发送
-    done->Run();
-}
+//     // 执行回调函数， 对象数据序列化和网络发送
+//     done->Run();
+// }
 
-bool UserSerivce::Register(uint32_t id, std::string name, std::string pwd)
-{
-    std::cout << "doing local service: Register" << std::endl;
-    std::cout << "id:" << id << "\tname:" << name << "\tpwd:" << pwd << std::endl;
-    return true;
-}
+// bool UserSerivce::Register(uint32_t id, std::string name, std::string pwd)
+// {
+//     std::cout << "doing local service: Register" << std::endl;
+//     std::cout << "id:" << id << "\tname:" << name << "\tpwd:" << pwd << std::endl;
+//     return true;
+// }
 
-void UserSerivce::Register(google::protobuf::RpcController *controller, const ::fixbug::RegisterRequest *request, ::fixbug::RegisterResponse *response, ::google::protobuf::Closure *done)
-{
-    uint32_t id = request->id();
-    std::string name = request->name();
-    std::string pwd = request->pwd();
+// void UserSerivce::Register(google::protobuf::RpcController *controller, const ::fixbug::RegisterRequest *request, ::fixbug::RegisterResponse *response, ::google::protobuf::Closure *done)
+// {
+//     uint32_t id = request->id();
+//     std::string name = request->name();
+//     std::string pwd = request->pwd();
 
-    bool bet = Register(id, name, pwd);
+//     bool bet = Register(id, name, pwd);
 
-    response->mutable_result()->set_errcode(0);
-    response->mutable_result()->set_errmsg("");
-    response->set_success(bet);
+//     response->mutable_result()->set_errcode(0);
+//     response->mutable_result()->set_errmsg("");
+//     response->set_success(bet);
 
-    done->Run();
-}
+//     done->Run();
+// }
 
-int main(int argc, char **argv)
-{
-    MprpcApplication::init(argc, argv);
+// int main(int argc, char **argv)
+// {
+//     MprpcApplication::init(argc, argv);
 
-    RpcProvider provider;
-    provider.NotifyService(new UserSerivce());
-    provider.run();
-}
+//     RpcProvider provider;
+//     provider.NotifyService(new UserSerivce());
+//     provider.run();
+// }

@@ -5,6 +5,7 @@
 #include "friend.pb.h"
 #include "mprpcapplication.h"
 #include "rpcprovider.h"
+#include "logger.h"
 
 class FriendService : public fixbug::GetFriends
 {
@@ -44,7 +45,6 @@ void FriendService::GetFriendsList(::google::protobuf::RpcController *controller
 
 int main(int argc, char **argv)
 {
-
     // 调用框架的初始化操作
     MprpcApplication::init(argc, argv);
 

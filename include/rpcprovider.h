@@ -4,6 +4,7 @@
 #include "google/protobuf/service.h"
 #include "mprpcapplication.h"
 #include "google/protobuf/descriptor.h"
+#include "zookeeperutil.h"
 
 #include <string>
 #include <functional>

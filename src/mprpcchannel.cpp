@@ -1,6 +1,8 @@
 #include "mprpcchannel.h"
 #include "rpcprovider.pb.h"
-#include <mprpcapplication.h>
+#include "mprpcapplication.h"
+#include "mprpcchannel.h"
+#include "zookeeperutil.h"
 
 #include <string>
 #include <unistd.h>
@@ -28,7 +30,7 @@ void MpRpcChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
     }
     else
     {
-        std::cout << " serialize error" << std::endl;
+        controller->SetFailed("serialize request error");
         return;
     }
 
@@ -46,7 +48,7 @@ void MpRpcChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
     }
     else
     {
-        std::cout << " serialize error" << std::endl;
+        controller->SetFailed("serialize error");
         return;
     }
 
@@ -68,12 +70,38 @@ void MpRpcChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
     int cfd = socket(AF_INET, SOCK_STREAM, 0);
     if (cfd == -1)
     {
-        std::cout << "socket error " << errno << std::endl;
-        exit(EXIT_FAILURE);
+        char errtxt[512] = {0};
+        sprintf(errtxt, "create socket error! errno:%d", errno);
+        controller->SetFailed(errtxt);
+        return;
     }
 
-    std::string ip = MprpcApplication::getInstance().getMprpcConfig().Load("rpcserverip");
-    uint16_t port = atoi(MprpcApplication::getInstance().getMprpcConfig().Load("rpcserverport").c_str());
+    // std::string ip = MprpcApplication::getInstance().getMprpcConfig().Load("rpcserverip");
+    // uint16_t port = atoi(MprpcApplication::getInstance().getMprpcConfig().Load("rpcserverport").c_str());
+
+    // 读取配置文件rpcserver的信息
+    // std::string ip = MprpcApplication::GetInstance().GetConfig().Load("rpcserverip");
+    // uint16_t port = atoi(MprpcApplication::GetInstance().GetConfig().Load("rpcserverport").c_str());
+    // rpc调用方想调用service_name的method_name服务，需要查询zk上该服务所在的host信息
+    ZkClient zkCli;
+    zkCli.Start();
+    //  /UserServiceRpc/Login
+    std::string method_path = "/" + serviceName + "/" + methodName;
+    // 127.0.0.1:8000
+    std::string host_data = zkCli.GetData(method_path.c_str());
+    if (host_data == "")
+    {
+        controller->SetFailed(method_path + " is not exist!");
+        return;
+    }
+    int idx = host_data.find(":");
+    if (idx == -1)
+    {
+        controller->SetFailed(method_path + " address is invalid!");
+        return;
+    }
+    std::string ip = host_data.substr(0, idx);
+    uint16_t port = atoi(host_data.substr(idx + 1, host_data.size() - idx).c_str());
 
     sockaddr_in saddr;
     saddr.sin_family = AF_INET;
@@ -81,17 +109,21 @@ void MpRpcChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
     saddr.sin_addr.s_addr = inet_addr(ip.c_str());
 
     // 连接rpc服务节点
-    if (connect(cfd, reinterpret_cast<sockaddr *>(&saddr), sizeof (saddr)) == -1)
+    if (connect(cfd, reinterpret_cast<sockaddr *>(&saddr), sizeof(saddr)) == -1)
     {
-        std::cout << "connect error " << errno << std::endl;
         close(cfd);
-        exit(EXIT_FAILURE);
+        char errtxt[512] = {0};
+        sprintf(errtxt, "connect error! errno:%d", errno);
+        controller->SetFailed(errtxt);
+        return;
     }
 
     if (send(cfd, rpcStr.c_str(), rpcStr.size(), 0) == -1)
     {
-        std::cout << "send error " << errno << std::endl;
         close(cfd);
+        char errtxt[512] = {0};
+        sprintf(errtxt, "send error! errno:%d", errno);
+        controller->SetFailed(errtxt);
         return;
     }
 
@@ -100,8 +132,10 @@ void MpRpcChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
     int recvSize = 0;
     if ((recvSize = recv(cfd, recvBuf, BUFSIZ, 0)) == -1)
     {
-        std::cout << "send error " << errno << std::endl;
         close(cfd);
+        char errtxt[512] = {0};
+        sprintf(errtxt, "recv error! errno:%d", errno);
+        controller->SetFailed(errtxt);
         return;
     }
 
@@ -110,8 +144,10 @@ void MpRpcChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
     // if (!response->ParseFromString(responseStr))
     if (!response->ParseFromArray(recvBuf, recvSize))
     {
-        std::cout << "parse error recvBuf:  " << recvBuf << std::endl;
         close(cfd);
+        char errtxt[512] = {0};
+        sprintf(errtxt, "parse error! response_str:%s", recvBuf);
+        controller->SetFailed(errtxt);
         return;
     }
 }
